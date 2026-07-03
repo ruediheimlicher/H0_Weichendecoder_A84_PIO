@@ -64,11 +64,11 @@
 #define LAMPEB_PIN   3
 
 
-
+/*
 #define SNIFFPORT    PORTA 
 #define SNIFFDDR     DDRA
 #define SNIFFPIN     PINA
-
+*/
 
 // Bits
 #define FUNKTIONOK   2
@@ -92,7 +92,7 @@
 #define STARTWAIT       100
 
 // speed
-#define SPEEDREDFAKTOR  3   // faktor fuer Bremse
+//#define SPEEDREDFAKTOR  3   // faktor fuer Bremse
 
 // old
 #define ADDRESSBIT   0
@@ -120,9 +120,9 @@
 #define INT0_PAKET_A 4
 #define INT0_PAKET_B 5
 
-#define WEICHEPORT PORTC
-#define WEICHEDDR  DDRC
-#define WEICHEPIN   PINC
+#define WEICHEPORT PORTB
+#define WEICHEDDR  DDRB
+#define WEICHEPIN   PINB
 
 #define LED_CHANGEBIT       7  
 #define WEICHEA_PIN      1 
@@ -131,10 +131,10 @@
 #define WEICHEDIP_PORT    PORTA
 #define WEICHEDIP_DDR     DDRA
 #define WEICHEDIP_PIN     PINA
-#define WEICHEDIP0        3
-#define WEICHEDIP1        4
-#define WEICHEDIP2        5
-#define WEICHEDIP3        2
+#define WEICHEDIP0        0
+#define WEICHEDIP1        1
+#define WEICHEDIP2        2
+#define WEICHEDIP3        3
 
 
 #define WEICHESTART       0
@@ -145,7 +145,7 @@
 #define WEICHEOFF         5
 #define ABLENKUNG         6
 #define GERADE            7
-#define WEICHENIMPULSDAUER  900
+#define WEICHENIMPULSDAUER  300
 
 
 #define WEICHE         3
