@@ -535,8 +535,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
                            weichenstatus |= (1<<WEICHESTART);
                            weichenimpulscounter = 0;
                            //OSZI_B_LO();
-                           //TEST1_LO();
-                        
+                           
                         
                            if(lokstatus & (1<<FUNKTIONBIT))       // Weiche auf Ablenkung stellen
                            {
