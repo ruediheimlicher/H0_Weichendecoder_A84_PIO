@@ -314,8 +314,22 @@ ISR(EXT_INT0_vect)
 // MARK: ISR Timer0
 ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 {
+   if (weichenstatus & (1 << WEICHESTART)) //Impuls noch ON
+   {
+      weichenimpulscounter++;
+      if (weichenimpulscounter > WEICHENIMPULSDAUER)
+      {
+         weichenstatus &= ~(1 << ABLENKUNG);
+         weichenstatus &= ~(1 << GERADE);
+         WEICHEPORT &= ~(1 << WEICHEA_PIN);
+         WEICHEPORT &= ~(1 << WEICHEB_PIN);
 
+         //
+         weichenstatus &= ~(1 << WEICHESTART);
+      }
+   }
    
+
    // MARK: TIMER0 TIMER0_COMPA INT0
    if (INT0status & (1 << INT0_WAIT))
    {
@@ -627,10 +641,11 @@ int main(void)
 
       } // Source OK
 
+      /*
       if (weichenstatus & (1 << WEICHESTART))
       {
 
-         weichenimpulscounter++;
+         //weichenimpulscounter++;
 
          if (weichenstatus & (1 << ABLENKUNG))
          {
@@ -656,7 +671,7 @@ int main(void)
             weichenstatus &= ~(1 << WEICHESTART);
          }
       }
-
+      */
       loopcount0++;
       if (loopcount0 >= refreshtakt)
       {
