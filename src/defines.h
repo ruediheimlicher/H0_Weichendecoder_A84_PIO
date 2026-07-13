@@ -145,7 +145,7 @@
 #define WEICHEOFF         5
 #define ABLENKUNG         6
 #define GERADE            7
-#define WEICHENIMPULSDAUER  300
+#define WEICHENIMPULSDAUER  200
 
 
 #define WEICHE         3
