@@ -111,6 +111,7 @@ volatile uint8_t lokstatus16 = 0x00; // Funktion, Richtung
 volatile uint8_t weichenstatus = 0;
 
 volatile uint16_t weichenimpulscounter = 0;
+volatile uint16_t weichewaitcounter = 0;
 
 // volatile uint16_t   startdelaycounter = 0; //
 // volatile uint16_t   newlokdata = 0;
@@ -326,6 +327,10 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 
          //
          weichenstatus &= ~(1 << WEICHESTART);
+
+         weichenstatus |= (1 << WEICHEWAIT);
+         
+
       }
    }
    
@@ -460,7 +465,6 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
                      // OSZI_B_LO();
                      //  Daten uebernehmen
 
-                     // weichenimpulscounter
                      lokstatus |= (1 << ADDRESSBIT);
                      deflokadresse = lokadresseB;
                      // deffunktion = (rawdataB & 0x03); // bit 0,1 funktion als eigene var

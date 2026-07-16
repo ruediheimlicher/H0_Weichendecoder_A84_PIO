@@ -139,13 +139,13 @@
 
 #define WEICHESTART       0
 #define WEICHERUN         1
-#define WEICHEDELAY       2
+#define WEICHEWAIT        2
 #define WEICHEREADY       3
 
 #define WEICHEOFF         5
 #define ABLENKUNG         6
 #define GERADE            7
-#define WEICHENIMPULSDAUER  200
+#define WEICHENIMPULSDAUER  5000
 
 
 #define WEICHE         3
