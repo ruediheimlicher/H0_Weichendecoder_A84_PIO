@@ -317,7 +317,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 {
    if (weichenstatus & (1 << WEICHESTART)) //Impuls noch ON
    {
-      weichenimpulscounter++;
+      
       if (weichenimpulscounter > WEICHENIMPULSDAUER)
       {
          weichenstatus &= ~(1 << ABLENKUNG);
@@ -328,11 +328,35 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
          //
          weichenstatus &= ~(1 << WEICHESTART);
 
+         // Wait starten
          weichenstatus |= (1 << WEICHEWAIT);
-         
+         weichewaitcounter = 0;
+
 
       }
+      else
+      {
+         weichenimpulscounter++;
+      }
    }
+
+   if (weichenstatus & (1<<WEICHEWAIT))
+   {
+   
+      {
+         
+         if(weichewaitcounter > WEICHENWAITDAUER)
+         {
+            weichenstatus &= ~(1 << WEICHEWAIT);
+            //weichenstatus &= ~(1 << WEICHESTART);
+         }
+         else
+         {
+            weichewaitcounter++;
+         }
+      }
+   }
+
    
 
    // MARK: TIMER0 TIMER0_COMPA INT0
@@ -502,9 +526,16 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
-                        weichenimpulscounter = 0;
-                        if (!(weichenstatus & (1 << WEICHESTART)))
+                        
+                       if (weichenstatus & (1<<WEICHEWAIT))
+                       {
+
+                       }
+                        //weichenimpulscounter = 0;
+                       else if (!(weichenstatus & (1 << WEICHESTART)))
                         {
+                           // Weiche starten
+
                            weichenstatus |= (1 << WEICHESTART);
                            weichenimpulscounter = 0;
                            // OSZI_B_LO();
@@ -645,7 +676,7 @@ int main(void)
 
       } // Source OK
 
-      /*
+      /* // in ISR verschoben
       if (weichenstatus & (1 << WEICHESTART))
       {
 
