@@ -9,6 +9,7 @@
 #define defines_h
 
 
+
 #define LOOPLEDPORT     PORTA
 #define LOOPLEDDDR      DDRA
 #define LOOPLED         4 // 
@@ -25,6 +26,7 @@
 #define OSZIDDR   DDRA
 
 #define OSZIA 7           // 
+
 
 
 #define PAKETA   0

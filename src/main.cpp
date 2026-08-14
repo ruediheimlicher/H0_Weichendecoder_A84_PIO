@@ -216,10 +216,10 @@ void slaveinit(void)
    WEICHEDIP_PORT |= (1 << WEICHEDIP1);
    WEICHEDIP_PORT |= (1 << WEICHEDIP2);
 
-   WEICHEDDR |= (1 << WEICHEA_PIN);   // Weichedir A
+   WEICHEDDR |= (1 << WEICHEA_PIN);   // Weichedir A OUTPUT
    WEICHEPORT &= ~(1 << WEICHEA_PIN); // LO
 
-   WEICHEDDR |= (1 << WEICHEB_PIN);   // Weichedir B
+   WEICHEDDR |= (1 << WEICHEB_PIN);   // Weichedir B OUTPUT
    WEICHEPORT &= ~(1 << WEICHEB_PIN); // LO
 
    maxspeed = 254;
@@ -229,6 +229,7 @@ void slaveinit(void)
 
    // |= (1<<FIRSTRUNBIT);
 }
+
 
 void int0_init(void)
 {
@@ -284,7 +285,6 @@ ISR(EXT_INT0_vect)
          INT0status |= (1 << INT0_WAIT); // delay, um Wert des Eingangs zum richtigen Zeitpunkt zu messen
 
          INT0status |= (1 << INT0_PAKET_A); // erstes Paket lesen
-         // OSZIPORT &= ~(1<<PAKETA);
 
          pausecounter = 0;   // pausen detektieren, reset fuer jedes HI
          abstandcounter = 0; // zweites Paket detektieren,
@@ -348,7 +348,6 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
          if(weichewaitcounter > WEICHENWAITDAUER)
          {
             weichenstatus &= ~(1 << WEICHEWAIT);
-            //weichenstatus &= ~(1 << WEICHESTART);
          }
          else
          {
@@ -368,6 +367,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 
          // OSZI_A_LO();
          // OSZIAHI;
+         
          INT0status &= ~(1 << INT0_WAIT);
          if (INT0status & (1 << INT0_PAKET_A))
          {
@@ -457,10 +457,11 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
          }
          else // Paket gelesen
          {
+            
             // Paket A?
             if (INT0status & (1 << INT0_PAKET_A)) // erstes Paket, Werte speichern
             {
-
+               
                oldfunktion = funktion;
 
                INT0status &= ~(1 << INT0_PAKET_A); // Bit fuer erstes Paket weg
@@ -469,6 +470,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
             }
             else if (INT0status & (1 << INT0_PAKET_B)) // zweites Paket, Werte testen
             {
+               OSZIALO;
                // SYNC_LO();
                // displaystatus |= (1<<DISPLAY_GO);
                //  // Displayfenster begin
@@ -477,14 +479,14 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
                //  MARK: EQUAL
                if (lokadresseA && ((rawfunktionA == rawfunktionB) && (rawdataA == rawdataB) && (lokadresseA == lokadresseB))) // Lokadresse > 0 und Lokadresse und Data OK
                {
-
+                  //OSZIALO;
                   // SYNC_LO();
-                  if (lokadresseB == LOK_ADRESSE)
+                  if (lokadresseB == LOK_ADRESSE) // Adresse stimmt
                   {
 
                      // weichenstatus |= (1<<WEICHERUN);
 
-                     // OSZI_A_LO();
+                     //OSZIALO;
                      //  TEST1_LO();
                      // OSZI_B_LO();
                      //  Daten uebernehmen
@@ -526,7 +528,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
-                        
+                        //OSZIALO;
                        if (weichenstatus & (1<<WEICHEWAIT))
                        {
 
@@ -567,6 +569,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
                         //weichenstatus |= (1<<WEICHEOFF);
                         */
                      }
+                     OSZIAHI;
                   }
                   else
                   {
@@ -592,7 +595,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
                }
             } // End Paket B
          }
-         // OSZI_B_HI();
+         OSZIAHI;
       } // waitcounter > 2
    } // if INT0_WAIT
 
@@ -625,7 +628,7 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 
    } // input LO
    // OSZI_B_HI();
-} // TIM0
+} // TIME0
 
 int main(void)
 {
@@ -676,43 +679,11 @@ int main(void)
 
       } // Source OK
 
-      /* // in ISR verschoben
-      if (weichenstatus & (1 << WEICHESTART))
-      {
-
-         //weichenimpulscounter++;
-
-         if (weichenstatus & (1 << ABLENKUNG))
-         {
-            //WEICHEPORT &= ~(1 << WEICHEA_PIN);
-            //WEICHEPORT |= (1 << WEICHEB_PIN);
-            //weichenstatus &= ~(1 << ABLENKUNG);
-         }
-         else if (weichenstatus & (1 << GERADE))
-         {
-            //WEICHEPORT |= (1 << WEICHEA_PIN);
-            //WEICHEPORT &= ~(1 << WEICHEB_PIN);
-            //weichenstatus &= ~(1 << GERADE);
-         }
-
-         if (weichenimpulscounter > WEICHENIMPULSDAUER)
-         {
-            weichenstatus &= ~(1 << ABLENKUNG);
-            weichenstatus &= ~(1 << GERADE);
-            WEICHEPORT &= ~(1 << WEICHEA_PIN);
-            WEICHEPORT &= ~(1 << WEICHEB_PIN);
-
-            //
-            weichenstatus &= ~(1 << WEICHESTART);
-         }
-      }
-      */
+      
       loopcount0++;
       if (loopcount0 >= refreshtakt)
       {
-         // OSZIATOG;
-         // LOOPLEDPORT ^= (1<<LOOPLED);
-
+      
          loopcount0 = 0;
 
       } // loopcount0>=refreshtakt
