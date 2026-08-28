@@ -211,10 +211,13 @@ void slaveinit(void)
    WEICHEDIP_DDR &= ~(1 << WEICHEDIP0);
    WEICHEDIP_DDR &= ~(1 << WEICHEDIP1);
    WEICHEDIP_DDR &= ~(1 << WEICHEDIP2);
+   WEICHEDIP_DDR &= ~(1 << WEICHEDIP3);
 
    WEICHEDIP_PORT |= (1 << WEICHEDIP0); // pullup
    WEICHEDIP_PORT |= (1 << WEICHEDIP1);
    WEICHEDIP_PORT |= (1 << WEICHEDIP2);
+   WEICHEDIP_PORT |= (1 << WEICHEDIP3);
+
 
    WEICHEDDR |= (1 << WEICHEA_PIN);   // Weichedir A OUTPUT
    WEICHEPORT &= ~(1 << WEICHEA_PIN); // LO
@@ -273,7 +276,6 @@ void timer0(uint8_t wert)
 ISR(EXT_INT0_vect)
 {
    // OSZI_A_LO();
-   // if(displayfenstercounter%4 == 0)
    {
       // OSZI_B_LO();
 
@@ -313,19 +315,19 @@ ISR(EXT_INT0_vect)
 }
 
 // MARK: ISR Timer0
-ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
+ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 {
    if (weichenstatus & (1 << WEICHESTART)) //Impuls noch ON
    {
       
       if (weichenimpulscounter > WEICHENIMPULSDAUER)
       {
+         // Impuls beenden
          weichenstatus &= ~(1 << ABLENKUNG);
          weichenstatus &= ~(1 << GERADE);
          WEICHEPORT &= ~(1 << WEICHEA_PIN);
          WEICHEPORT &= ~(1 << WEICHEB_PIN);
 
-         //
          weichenstatus &= ~(1 << WEICHESTART);
 
          // Wait starten
@@ -342,18 +344,16 @@ ISR(TIM0_COMPA_vect) // Schaltet Impuls an MOTORB_PIN LO wenn speed
 
    if (weichenstatus & (1<<WEICHEWAIT))
    {
-   
+
+      if(weichewaitcounter > WEICHENWAITDAUER)
       {
-         
-         if(weichewaitcounter > WEICHENWAITDAUER)
-         {
-            weichenstatus &= ~(1 << WEICHEWAIT);
-         }
-         else
-         {
-            weichewaitcounter++;
-         }
+         weichenstatus &= ~(1 << WEICHEWAIT);
       }
+      else
+      {
+         weichewaitcounter++;
+      }
+
    }
 
    
