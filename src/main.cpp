@@ -317,45 +317,6 @@ ISR(EXT_INT0_vect)
 // MARK: ISR Timer0
 ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 {
-   if (weichenstatus & (1 << WEICHESTART)) //Impuls noch ON
-   {
-      
-      if (weichenimpulscounter > WEICHENIMPULSDAUER)
-      {
-         // Impuls beenden
-         weichenstatus &= ~(1 << ABLENKUNG);
-         weichenstatus &= ~(1 << GERADE);
-         WEICHEPORT &= ~(1 << WEICHEA_PIN);
-         WEICHEPORT &= ~(1 << WEICHEB_PIN);
-
-         weichenstatus &= ~(1 << WEICHESTART);
-
-         // Wait starten
-         weichenstatus |= (1 << WEICHEWAIT);
-         weichewaitcounter = 0;
-
-
-      }
-      else
-      {
-         weichenimpulscounter++;
-      }
-   }
-
-   if (weichenstatus & (1<<WEICHEWAIT))
-   {
-
-      if(weichewaitcounter > WEICHENWAITDAUER)
-      {
-         weichenstatus &= ~(1 << WEICHEWAIT);
-      }
-      else
-      {
-         weichewaitcounter++;
-      }
-
-   }
-
    
 
    // MARK: TIMER0 TIMER0_COMPA INT0
@@ -364,10 +325,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
       waitcounter++;
       if (waitcounter > 2) // Impulsdauer > minimum, nach einer gewissen Zeit den Stautus abfragen
       {
-
-         // OSZI_A_LO();
-         // OSZIAHI;
-         
+       // OSZI_A_LO();
          INT0status &= ~(1 << INT0_WAIT);
          if (INT0status & (1 << INT0_PAKET_A))
          {
@@ -493,6 +451,10 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 
                      lokstatus |= (1 << ADDRESSBIT);
                      deflokadresse = lokadresseB;
+                     
+                     lokadresseA = 0; // reset
+                     lokadresseB = 0;
+
                      // deffunktion = (rawdataB & 0x03); // bit 0,1 funktion als eigene var
                      deffunktion = rawfunktionB;
 
@@ -520,7 +482,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                         }
                      }
 
-                     // Weichennummer checken
+                     // Weichennummer checken , spezifisch für tiny84
                      WEICHENCODE = 0xFF;
                      WEICHENCODE = WEICHEDIP_PIN & 0x07;
 
@@ -528,13 +490,16 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
-                        //OSZIALO;
+                        /*
                        if (weichenstatus & (1<<WEICHEWAIT))
                        {
 
                        }
                         //weichenimpulscounter = 0;
-                       else if (!(weichenstatus & (1 << WEICHESTART)))
+                       else 
+                       */
+                        weichenimpulscounter = 0;
+                       if (!(weichenstatus & (1 << WEICHESTART)))
                         {
                            // Weiche starten
 
@@ -546,28 +511,28 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                            {
                               weichenstatus |= (1 << ABLENKUNG);
                               weichenstatus &= ~(1 << GERADE);
-                              WEICHEPORT &= ~(1 << WEICHEA_PIN);
-                              WEICHEPORT |= (1 << WEICHEB_PIN);
+                             //WEICHEPORT &= ~(1 << WEICHEA_PIN);
+                              //WEICHEPORT |= (1 << WEICHEB_PIN);
                            }
                            else // Weiche auf Gerade stellen
                            {
                               weichenstatus |= (1 << GERADE);
                               weichenstatus &= ~(1 << ABLENKUNG);
-                              WEICHEPORT |= (1 << WEICHEA_PIN);
-                              WEICHEPORT &= ~(1 << WEICHEB_PIN);
+                              //WEICHEPORT |= (1 << WEICHEA_PIN);
+                              //WEICHEPORT &= ~(1 << WEICHEB_PIN);
                            }
                         }
 
                      }
                      else
                      {
-                        /*
+                        
                         weichenstatus &= ~(1<<ABLENKUNG);
                         weichenstatus &= ~(1<<GERADE);
                         WEICHEPORT &= ~(1<<WEICHEA_PIN);
                         WEICHEPORT &= ~(1<<WEICHEB_PIN);
                         //weichenstatus |= (1<<WEICHEOFF);
-                        */
+                        
                      }
                      OSZIAHI;
                   }
@@ -679,6 +644,41 @@ int main(void)
 
       } // Source OK
 
+      // transfer a328
+      if(weichenstatus & (1<<WEICHESTART))
+      {
+         
+         weichenimpulscounter++;
+       
+         if(weichenstatus & (1<<ABLENKUNG))
+         {
+            WEICHEPORT &= ~(1<<WEICHEA_PIN);
+            WEICHEPORT |= (1<<WEICHEB_PIN); 
+            weichenstatus &= ~(1<<ABLENKUNG);
+         }
+         else if(weichenstatus & (1<<GERADE))
+         {
+            WEICHEPORT |= (1<<WEICHEA_PIN);
+            WEICHEPORT &= ~(1<<WEICHEB_PIN);
+            weichenstatus &= ~(1<<GERADE);
+         }
+
+         if(weichenimpulscounter > 8*WEICHENIMPULSDAUER)
+         {
+            //TEST1_HI();
+            //OSZI_B_HI();
+            WEICHEPORT &= ~(1<<WEICHEA_PIN);
+            WEICHEPORT &= ~(1<<WEICHEB_PIN);
+
+            
+            //
+            weichenstatus &= ~(1<<WEICHESTART);
+            
+         }
+         
+      }
+
+      // end transfer a328
       
       loopcount0++;
       if (loopcount0 >= refreshtakt)
