@@ -122,6 +122,8 @@
 #define INT0_PAKET_A 4
 #define INT0_PAKET_B 5
 
+
+
 #define WEICHEPORT PORTB
 #define WEICHEDDR  DDRB
 #define WEICHEPIN   PINB

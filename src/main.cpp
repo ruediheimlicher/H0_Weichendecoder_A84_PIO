@@ -152,8 +152,7 @@ volatile uint8_t deffunktion = 0;
 volatile uint8_t waitcounter = 0;
 volatile uint8_t richtungcounter = 0; // delay fuer Richtungsimpuls
 
-volatile uint8_t pwmpin = MOTORA_PIN;      // Motor PWM
-volatile uint8_t richtungpin = MOTORB_PIN; // Motor Richtung
+
 
 // volatile uint8_t	Potwert=45;
 //	Zaehler fuer richtige Impulsdauer
@@ -227,8 +226,7 @@ void slaveinit(void)
 
    maxspeed = 254;
 
-   pwmpin = MOTORA_PIN;
-   richtungpin = MOTORB_PIN;
+
 
    // |= (1<<FIRSTRUNBIT);
 }
@@ -351,7 +349,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
       }
       else
       {
-         weichewaitcounter++;
+         weichewaitcounter++; // noch warten, doppelte Pulse vermeiden
       }
 
    }
