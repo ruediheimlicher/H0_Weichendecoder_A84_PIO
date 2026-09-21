@@ -505,6 +505,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                         ledstatus |= (1 << LED_CHANGEBIT); // led-change setzen
                      }
                      // deflokdata aufbauen
+                     /*
                      for (uint8_t i = 0; i < 8; i++)
                      {
                         // if ((rawdataB & (1<<(2+i))))
@@ -517,7 +518,8 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                            deflokdata &= ~(1 << i);
                         }
                      }
-
+                     */
+                     deflokdata = rawdataB;
                      // Weichennummer checken
                      WEICHENCODE = 0xFF;
                      WEICHENCODE = WEICHEDIP_PIN & 0x07;
@@ -559,13 +561,13 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                      }
                      else
                      {
-                        /*
+                        
                         weichenstatus &= ~(1<<ABLENKUNG);
                         weichenstatus &= ~(1<<GERADE);
                         WEICHEPORT &= ~(1<<WEICHEA_PIN);
                         WEICHEPORT &= ~(1<<WEICHEB_PIN);
                         //weichenstatus |= (1<<WEICHEOFF);
-                        */
+                        
                      }
                      OSZIAHI;
                   }
@@ -651,7 +653,7 @@ int main(void)
    // https://bigdanzblog.wordpress.com/2015/07/20/resetting-rebooting-attiny85-with-watchdog-timer-wdt/
 
    wdt_reset();
-   ledpwm = LEDPWM;
+   //ledpwm = LEDPWM;
 
    uint8_t i = 0;
    for (i = 0; i < 15; i++)
@@ -677,7 +679,7 @@ int main(void)
 
       } // Source OK
 
-      
+      /*
       loopcount0++;
       if (loopcount0 >= refreshtakt)
       {
@@ -685,7 +687,7 @@ int main(void)
          loopcount0 = 0;
 
       } // loopcount0>=refreshtakt
-
+      */
       // OSZIAHI;
    } // while
    return 0;
