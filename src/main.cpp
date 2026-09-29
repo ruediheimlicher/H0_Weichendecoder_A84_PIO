@@ -520,10 +520,10 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 
                      // Weichennummer checken
                      WEICHENCODE = 0xFF;
-                     WEICHENCODE = WEICHEDIP_PIN & 0x07;
+                     WEICHENCODE = WEICHEDIP_PIN; // & 0x0F;
 
-                     WEICHENCODE = 7 - WEICHENCODE; // dipschalter ist active LOW > invertieren
-
+                     WEICHENCODE = ~WEICHENCODE; // dipschalter ist active LOW > invertieren
+                     WEICHENCODE &= 0x0F;
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
                         //OSZIALO;
