@@ -43,7 +43,7 @@ H0-Interface:  OK
 //***********************************
 //***********************************
 uint8_t LOK_ADRESSE = 0x7F; //	11001100	Trinär
-uint8_t WEICHENCODE = 0;
+uint8_t WEICHENCODE = 0xFF;
 //***********************************
 //***********************************
 
@@ -199,6 +199,11 @@ uint16_t speedchangetakt = 0x800; // takt fuer beschleunigen/bremsen
 // https://stackoverflow.com/questions/70049553/best-way-to-handle-multiple-pcint-in-avr
 volatile uint8_t portahistory = 0xFF; // default is high because the pull-up
 
+uint8_t reverse_4bits(uint8_t  n) 
+{
+    return ((n & 1) << 3) | ((n & 2) << 1) | ((n & 4) >> 1) | ((n & 8) >> 3);
+}
+
 void slaveinit(void)
 {
    OSZIPORT |= (1 << OSZIA); // Ausgang fuer OSZI A
@@ -216,7 +221,6 @@ void slaveinit(void)
    WEICHEDIP_PORT |= (1 << WEICHEDIP1);
    WEICHEDIP_PORT |= (1 << WEICHEDIP2);
    WEICHEDIP_PORT |= (1 << WEICHEDIP3);
-
 
    WEICHEDDR |= (1 << WEICHEA_PIN);   // Weichedir A OUTPUT
    WEICHEPORT &= ~(1 << WEICHEA_PIN); // LO
@@ -524,7 +528,8 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                      WEICHENCODE = 0xFF;
                      WEICHENCODE = WEICHEDIP_PIN & 0x07;
 
-                     WEICHENCODE = 7 - WEICHENCODE; // dipschalter ist active LOW > invertieren
+                     WEICHENCODE = 15 - WEICHENCODE; // dipschalter ist active LOW > invertieren
+                     //WEICHENCODE = reverse_4bits(WEICHENCODE);
 
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
@@ -566,7 +571,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                         weichenstatus &= ~(1<<GERADE);
                         WEICHEPORT &= ~(1<<WEICHEA_PIN);
                         WEICHEPORT &= ~(1<<WEICHEB_PIN);
-                        //weichenstatus |= (1<<WEICHEOFF);
+                        WEICHENCODE = 0xFF;
                         
                      }
                      OSZIAHI;
@@ -575,6 +580,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                   {
                      // aussteigen
                      INT0status = 0;
+                     WEICHENCODE = 0xFF;
 
                      return;
                   }
@@ -585,6 +591,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                   lokstatus &= ~(1 << ADDRESSBIT);
 
                   INT0status = 0;
+                  WEICHENCODE = 0xFF;
                   return;
                }
 
