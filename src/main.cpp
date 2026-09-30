@@ -136,6 +136,11 @@ volatile int8_t speedintervall = 0;
 volatile uint16_t speed16 = 0;
 volatile uint16_t motorPWM16 = 0;
 
+volatile uint16_t    saveEEPROM_Addresse = 0;
+volatile uint8_t     EEPROM_savestatus=0x00;   
+volatile uint8_t     EEPROM_lastsavedstatus = 0;
+
+
 volatile uint16_t oldspeed16 = 0;
 volatile uint16_t newspeed16 = 0;
 volatile uint16_t minspeed16 = 0;   // Unterster Wert in speedlookup-tabelle
@@ -198,6 +203,27 @@ uint16_t speedchangetakt = 0x800; // takt fuer beschleunigen/bremsen
 
 // https://stackoverflow.com/questions/70049553/best-way-to-handle-multiple-pcint-in-avr
 volatile uint8_t portahistory = 0xFF; // default is high because the pull-up
+
+// Funktion, um ein Byte aus dem EEPROM zu lesen
+uint8_t EEPROM_Read(uint16_t address) {
+    return eeprom_read_byte((uint8_t*)address);
+}
+
+// Function to read a byte from the EEPROM from ChatGPT
+uint8_t EEPROM_read(uint16_t address) 
+{
+    // Wait for completion of previous write
+    while (EECR & (1 << EEPE));
+
+    // Set up address register
+    EEAR = address;
+
+    // Start EEPROM read by writing EERE
+    EECR |= (1 << EERE);
+
+    // Return data from the data register
+    return EEDR;
+}
 
 void slaveinit(void)
 {
@@ -523,7 +549,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                      WEICHENCODE = WEICHEDIP_PIN; // & 0x0F;
 
                      WEICHENCODE = ~WEICHENCODE; // dipschalter ist active LOW > invertieren
-                     WEICHENCODE &= 0x0F;
+                     WEICHENCODE &= 0x0F; // 4 Bit
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
                         //OSZIALO;
@@ -659,6 +685,30 @@ int main(void)
       // speedlookup[i] = speedlookuptable[SPEEDINDEX][i]; // soeedlookup fuer Lok laden
    }
 
+   // von H0_Decoder_A84_PIO
+   // EEPROM
+   if(saveEEPROM_Addresse)
+   {
+      EEPROM_lastsavedstatus = EEPROM_read(saveEEPROM_Addresse - 1);
+      // last data
+      uint8_t lastweichenstatus = (EEPROM_lastsavedstatus & 0xC0); // ABLENKUNG: bit 6, GERADE: bit 7
+      
+      
+      if (lastweichenstatus < 0xFF)
+      {
+         weichenstatus = lastweichenstatus;
+         
+      }
+      
+   }
+   else // default
+   {
+      weichenstatus &= ~(1 << ABLENKUNG);
+      weichenstatus |= ~(1 << GERADE);
+   }
+   // end EEPROM
+
+   
    sei();
    while (1)
    {
