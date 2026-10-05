@@ -8,7 +8,7 @@
 #ifndef defines_h
 #define defines_h
 
-
+#define MAX_EEPROM      512
 
 #define LOOPLEDPORT     PORTA
 #define LOOPLEDDDR      DDRA

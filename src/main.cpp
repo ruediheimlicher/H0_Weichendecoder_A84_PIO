@@ -136,10 +136,9 @@ volatile int8_t speedintervall = 0;
 volatile uint16_t speed16 = 0;
 volatile uint16_t motorPWM16 = 0;
 
-volatile uint16_t    saveEEPROM_Addresse = 0;
-volatile uint8_t     EEPROM_savestatus=0x00;   
-volatile uint8_t     EEPROM_lastsavedstatus = 0;
-
+volatile uint16_t saveEEPROM_Addresse = 0;
+volatile uint8_t EEPROM_savestatus = 0x00;
+volatile uint8_t EEPROM_lastsavedstatus = 0;
 
 volatile uint16_t oldspeed16 = 0;
 volatile uint16_t newspeed16 = 0;
@@ -156,8 +155,6 @@ volatile uint8_t funktion = 0;
 volatile uint8_t deffunktion = 0;
 volatile uint8_t waitcounter = 0;
 volatile uint8_t richtungcounter = 0; // delay fuer Richtungsimpuls
-
-
 
 // volatile uint8_t	Potwert=45;
 //	Zaehler fuer richtige Impulsdauer
@@ -204,25 +201,42 @@ uint16_t speedchangetakt = 0x800; // takt fuer beschleunigen/bremsen
 // https://stackoverflow.com/questions/70049553/best-way-to-handle-multiple-pcint-in-avr
 volatile uint8_t portahistory = 0xFF; // default is high because the pull-up
 
+// Funktion, um ein Byte in den EEPROM zu schreiben
+void EEPROM_Write(uint16_t address, uint8_t data)
+{
+   eeprom_update_byte((uint8_t *)address, data);
+}
+
+void EEPROM_Clear(void)
+{
+   uint16_t addr = 0;
+   while (addr++ < MAX_EEPROM)
+   {
+      EEPROM_Write(addr, 0xFF);
+   }
+}
+
 // Funktion, um ein Byte aus dem EEPROM zu lesen
-uint8_t EEPROM_Read(uint16_t address) {
-    return eeprom_read_byte((uint8_t*)address);
+uint8_t EEPROM_Read(uint16_t address)
+{
+   return eeprom_read_byte((uint8_t *)address);
 }
 
 // Function to read a byte from the EEPROM from ChatGPT
-uint8_t EEPROM_read(uint16_t address) 
+uint8_t EEPROM_read(uint16_t address)
 {
-    // Wait for completion of previous write
-    while (EECR & (1 << EEPE));
+   // Wait for completion of previous write
+   while (EECR & (1 << EEPE))
+      ;
 
-    // Set up address register
-    EEAR = address;
+   // Set up address register
+   EEAR = address;
 
-    // Start EEPROM read by writing EERE
-    EECR |= (1 << EERE);
+   // Start EEPROM read by writing EERE
+   EECR |= (1 << EERE);
 
-    // Return data from the data register
-    return EEDR;
+   // Return data from the data register
+   return EEDR;
 }
 
 void slaveinit(void)
@@ -243,7 +257,6 @@ void slaveinit(void)
    WEICHEDIP_PORT |= (1 << WEICHEDIP2);
    WEICHEDIP_PORT |= (1 << WEICHEDIP3);
 
-
    WEICHEDDR |= (1 << WEICHEA_PIN);   // Weichedir A OUTPUT
    WEICHEPORT &= ~(1 << WEICHEA_PIN); // LO
 
@@ -252,11 +265,8 @@ void slaveinit(void)
 
    maxspeed = 254;
 
-
-
    // |= (1<<FIRSTRUNBIT);
 }
-
 
 void int0_init(void)
 {
@@ -341,9 +351,9 @@ ISR(EXT_INT0_vect)
 // MARK: ISR Timer0
 ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 {
-   if (weichenstatus & (1 << WEICHESTART)) //Impuls noch ON
+   if (weichenstatus & (1 << WEICHESTART)) // Impuls noch ON
    {
-      
+
       if (weichenimpulscounter > WEICHENIMPULSDAUER)
       {
          // Impuls beenden
@@ -357,8 +367,6 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
          // Wait starten
          weichenstatus |= (1 << WEICHEWAIT);
          weichewaitcounter = 0;
-
-
       }
       else
       {
@@ -366,10 +374,10 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
       }
    }
 
-   if (weichenstatus & (1<<WEICHEWAIT))
+   if (weichenstatus & (1 << WEICHEWAIT))
    {
 
-      if(weichewaitcounter > WEICHENWAITDAUER)
+      if (weichewaitcounter > WEICHENWAITDAUER)
       {
          weichenstatus &= ~(1 << WEICHEWAIT);
       }
@@ -377,10 +385,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
       {
          weichewaitcounter++; // noch warten, doppelte Pulse vermeiden
       }
-
    }
-
-   
 
    // MARK: TIMER0 TIMER0_COMPA INT0
    if (INT0status & (1 << INT0_WAIT))
@@ -391,7 +396,7 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
 
          // OSZI_A_LO();
          // OSZIAHI;
-         
+
          INT0status &= ~(1 << INT0_WAIT);
          if (INT0status & (1 << INT0_PAKET_A))
          {
@@ -481,11 +486,11 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
          }
          else // Paket gelesen
          {
-            
+
             // Paket A?
             if (INT0status & (1 << INT0_PAKET_A)) // erstes Paket, Werte speichern
             {
-               
+
                oldfunktion = funktion;
 
                INT0status &= ~(1 << INT0_PAKET_A); // Bit fuer erstes Paket weg
@@ -503,17 +508,17 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                //  MARK: EQUAL
                if (lokadresseA && ((rawfunktionA == rawfunktionB) && (rawdataA == rawdataB) && (lokadresseA == lokadresseB))) // Lokadresse > 0 und Lokadresse und Data OK
                {
-                  //OSZIALO;
-                  // SYNC_LO();
+                  // OSZIALO;
+                  //  SYNC_LO();
                   if (lokadresseB == LOK_ADRESSE) // Adresse stimmt
                   {
 
                      // weichenstatus |= (1<<WEICHERUN);
 
-                     //OSZIALO;
-                     //  TEST1_LO();
-                     // OSZI_B_LO();
-                     //  Daten uebernehmen
+                     // OSZIALO;
+                     //   TEST1_LO();
+                     //  OSZI_B_LO();
+                     //   Daten uebernehmen
 
                      lokstatus |= (1 << ADDRESSBIT);
                      deflokadresse = lokadresseB;
@@ -548,17 +553,16 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                      WEICHENCODE = 0xFF;
                      WEICHENCODE = WEICHEDIP_PIN; // & 0x0F;
 
-                     WEICHENCODE = ~WEICHENCODE; // dipschalter ist active LOW > invertieren
-                     WEICHENCODE &= 0x0F; // 4 Bit
+                     WEICHENCODE = ~WEICHENCODE;                          // dipschalter ist active LOW > invertieren
+                     WEICHENCODE &= 0x0F;                                 // 4 Bit
                      if (deflokdata == speedcodelookuptable[WEICHENCODE]) // Weiche passt
                      {
-                        //OSZIALO;
-                       if (weichenstatus & (1<<WEICHEWAIT))
-                       {
-
-                       }
-                        //weichenimpulscounter = 0;
-                       else if (!(weichenstatus & (1 << WEICHESTART)))
+                        // OSZIALO;
+                        if (weichenstatus & (1 << WEICHEWAIT))
+                        {
+                        }
+                        // weichenimpulscounter = 0;
+                        else if (!(weichenstatus & (1 << WEICHESTART)))
                         {
                            // Weiche starten
 
@@ -581,7 +585,6 @@ ISR(TIM0_COMPA_vect) // 2.5us.  Schaltet Impuls an MOTORB_PIN LO wenn speed
                               WEICHEPORT &= ~(1 << WEICHEB_PIN);
                            }
                         }
-
                      }
                      else
                      {
@@ -687,28 +690,63 @@ int main(void)
 
    // von H0_Decoder_A84_PIO
    // EEPROM
-   if(saveEEPROM_Addresse)
+   // naechste Adresse fuer save Status
+   for (uint16_t loc = 0; loc < MAX_EEPROM; loc++)
+   {
+      uint8_t locdata = EEPROM_Read(loc);
+      if (locdata == 0xFF)
+      {
+         saveEEPROM_Addresse = loc;
+         break;
+      }
+   }
+
+   if (saveEEPROM_Addresse) // schon mindestens ein platz besetzt
    {
       EEPROM_lastsavedstatus = EEPROM_read(saveEEPROM_Addresse - 1);
       // last data
       uint8_t lastweichenstatus = (EEPROM_lastsavedstatus & 0xC0); // ABLENKUNG: bit 6, GERADE: bit 7
-      
-      
-      if (lastweichenstatus < 0xFF)
+
+      if (lastweichenstatus < 0xFF) // schon etwas gesichert
       {
          weichenstatus = lastweichenstatus;
+         if(weichenstatus & (1<<ABLENKUNG))
+         {
+            // Weiche auf Ablenkung
+            weichenstatus &= ~(1 << GERADE);
+            WEICHEPORT &= ~(1 << WEICHEA_PIN); // sicher ist sicher
+            WEICHEPORT |= (1 << WEICHEB_PIN);
+         }
+         else if(weichenstatus & (1<<GERADE))
+         {
+            weichenstatus &= ~(1 << ABLENKUNG);
+            WEICHEPORT |= (1 << WEICHEA_PIN);
+            WEICHEPORT &= ~(1 << WEICHEB_PIN);
+         }
+
+         weichenstatus |= (1 << WEICHESTART);
+         weichenimpulscounter = 0;
+     
          
       }
-      
    }
    else // default
    {
       weichenstatus &= ~(1 << ABLENKUNG);
       weichenstatus |= ~(1 << GERADE);
+      
+         if (!(weichenstatus & (1 << WEICHESTART)))
+         {
+            // Weiche starten
+
+            weichenstatus |= (1 << WEICHESTART);
+            weichenimpulscounter = 0;
+            WEICHEPORT |= (1 << WEICHEA_PIN);
+         }
+      
    }
    // end EEPROM
 
-   
    sei();
    while (1)
    {
@@ -727,11 +765,10 @@ int main(void)
 
       } // Source OK
 
-      
       loopcount0++;
       if (loopcount0 >= refreshtakt)
       {
-      
+
          loopcount0 = 0;
 
       } // loopcount0>=refreshtakt
